@@ -1836,83 +1836,6 @@ body.rgb-mode .rcard {
 .qty-bump.out { border-color:rgba(255,71,87,.3); color:var(--red); }
 .qty-bump.in  { border-color:rgba(46,213,115,.3); color:var(--green); }
 
-
-
-/* ═══════════════════════════════════════════
-   STOQ PRO PATCH v2.1 — Mobile/PC/PWA hardening
-═══════════════════════════════════════════ */
-:root{
-  --app-h:100dvh;
-  --safe-bottom:env(safe-area-inset-bottom,0px);
-  --safe-top:env(safe-area-inset-top,0px);
-}
-html{width:100%;min-height:100%;overflow:hidden;text-size-adjust:100%;-webkit-text-size-adjust:100%;}
-body{width:100%;height:var(--app-h);min-height:var(--app-h);overflow:hidden;overscroll-behavior:none;touch-action:manipulation;}
-#app,.main-area{height:var(--app-h);min-height:0;}
-.sidebar{height:var(--app-h);max-height:var(--app-h);}
-.scroll{min-height:0;height:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scroll-behavior:smooth;padding-bottom:calc(24px + var(--safe-bottom));}
-#sbHandle{top:50%;transform:translate(-1px,-50%);}
-.screen{min-height:100%;}
-.fctl,input,select,textarea,button{font-size:16px;}
-@media(min-width:769px){
-  .fctl,input,select,textarea,button{font-size:14px;}
-  .screen{max-width:1240px;margin:0 auto;width:100%;}
-  .sgrid{grid-template-columns:repeat(4,minmax(0,1fr));}
-  .cgrid{grid-template-columns:repeat(4,minmax(0,1fr));}
-  .modal{border-radius:24px;align-self:center;max-height:min(760px,88vh);padding-bottom:24px;}
-  .moverlay{align-items:center;}
-}
-@media(max-width:768px){
-  .topbar{height:calc(58px + var(--safe-top));padding-top:var(--safe-top);padding-left:max(12px,env(safe-area-inset-left,12px));padding-right:max(12px,env(safe-area-inset-right,12px));}
-  .screen{padding:16px 14px calc(98px + var(--safe-bottom));}
-  .sgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
-  .sc{padding:14px 12px;}
-  .snum{font-size:24px;}
-  .sh{margin-bottom:18px;}
-  .sh h1{font-size:22px;}
-  .insight-scroll{scroll-snap-type:x mandatory;padding-left:2px;}
-  .icard{width:82vw;max-width:260px;scroll-snap-align:start;}
-  .monthly-compare,.rcard{border-radius:16px;}
-  .icard-item,.mitem,.aitem,.acitem{border-radius:14px;}
-  .modal{max-height:88dvh;}
-  .toast-wrap{z-index:10000;}
-  .fab{width:56px;height:56px;border-radius:18px;}
-  #settingsPanel{width:calc(100vw - 20px);height:min(86dvh,760px);border-radius:20px;}
-  .sp-tabs{padding-left:14px;padding-right:14px;}
-  .sp-body{padding:16px 14px 22px;}
-}
-@media(max-width:430px){
-  .sgrid{grid-template-columns:repeat(2,minmax(0,1fr));}
-  .cgrid{grid-template-columns:repeat(2,minmax(0,1fr));}
-  .mb-label{width:42px;font-size:9px;}
-  .mb-val{width:48px;font-size:9px;}
-  .topbar{gap:8px;}
-  .tactions{gap:4px;}
-  .bicon{width:34px;height:34px;border-radius:10px;}
-}
-@media(max-width:360px){.screen{padding-left:10px;padding-right:10px}.sgrid{gap:8px}.sc{padding:12px 10px}.snum{font-size:21px}.slbl{font-size:9px}}
-@media(hover:none) and (pointer:coarse){
-  .sidebar-overlay,#settingsBackdrop,.moverlay,.toast,.install-banner{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
-  .sc:hover,.icard:hover,.ccard:hover,.fab:hover{transform:none;}
-}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important;}}
-.pro-command{background:linear-gradient(135deg,rgba(0,229,184,.09),rgba(59,158,255,.055));border:1px solid rgba(0,229,184,.18);border-radius:var(--r);padding:14px;margin:0 0 16px;position:relative;overflow:hidden;}
-.pro-command::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,184,.5),transparent);}
-.pro-command-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
-.pro-command-title{font-family:var(--sans);font-size:14px;font-weight:700;letter-spacing:-.2px;}
-.pro-command-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px;}
-.pro-score{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--accent);white-space:nowrap;}
-.pro-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
-.pro-mini{background:rgba(6,10,14,.38);border:1px solid var(--border);border-radius:12px;padding:10px;min-width:0;}
-.pro-mini-k{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.pro-mini-v{font-family:var(--mono);font-size:15px;font-weight:700;margin-top:5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.pro-mini.ok .pro-mini-v{color:var(--green)}.pro-mini.warn .pro-mini-v{color:var(--yellow)}.pro-mini.danger .pro-mini-v{color:var(--red)}.pro-mini.info .pro-mini-v{color:var(--blue)}
-.pro-action-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
-.pro-action{border:1px solid var(--border2);background:var(--surface2);color:var(--text2);border-radius:10px;padding:8px 10px;font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .18s;}
-.pro-action:hover{border-color:rgba(0,229,184,.35);color:var(--accent);background:var(--accent-dim);}
-@media(max-width:540px){.pro-grid{grid-template-columns:1fr}.pro-command-head{align-items:flex-start}.pro-score{font-size:20px}}
-body.pro-installed .install-banner{display:none!important;}
-body.pro-keyboard-open .bottom-nav,body.pro-keyboard-open .fab{display:none!important;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
@@ -3599,8 +3522,18 @@ document.getElementById('fabBtn').onclick=()=>{
 // ══════════════════════════════════════════
 let deferredInstallPrompt = null;
 
-// Registro do Service Worker centralizado no módulo PRO final.
-// Mantemos aqui apenas o prompt de instalação para evitar registro duplicado.
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    reg.addEventListener('updatefound',()=>{
+      const nw=reg.installing;
+      nw.addEventListener('statechange',()=>{
+        if(nw.state==='installed'&&navigator.serviceWorker.controller){
+          setTimeout(()=>toast('🔄 Atualização disponível — recarregue o app','info'),800);
+        }
+      });
+    });
+  }).catch(()=>{});
+}
 
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
@@ -6358,194 +6291,5 @@ function _showQtyBump(type, name, newQty, unit){
 </div>
 
 <div id="zoomIndicator">1×</div>
-
-
-<script>
-/* ══════════════════════════════════════════
-   STOQ PRO PATCH v2.1 — estabilidade + inteligência leve
-══════════════════════════════════════════ */
-(function(){
-  'use strict';
-  const PRO_VERSION = 'v2.1 PRO';
-
-  function setAppHeight(){
-    const h = Math.max(window.innerHeight || 0, 320);
-    document.documentElement.style.setProperty('--app-h', h + 'px');
-    const isKeyboard = window.matchMedia('(max-width: 768px)').matches && h < (window.screen.height || h) * 0.72;
-    document.body.classList.toggle('pro-keyboard-open', !!isKeyboard);
-  }
-
-  function safeToast(msg,type='info'){
-    try{ if(typeof toast==='function') toast(msg,type); }catch(e){}
-  }
-
-  function proFmtDays(days){
-    if(!Number.isFinite(days)) return 'sem histórico';
-    if(days <= 0) return 'hoje';
-    if(days === 1) return '1 dia';
-    return days + ' dias';
-  }
-
-  function proAverageOut(itemId,days=90){
-    const from = Date.now() - days*86400000;
-    const total = S.movs
-      .filter(m=>m.itemId===itemId && m.type==='out' && m.ts>=from)
-      .reduce((s,m)=>s+Number(m.qty||0),0);
-    return total / days;
-  }
-
-  function proForecasts(){
-    return S.items.map(it=>{
-      const rate = proAverageOut(it.id,90);
-      const days = rate>0 ? Math.floor(Number(it.qty||0)/rate) : Infinity;
-      return {it,rate,days};
-    }).filter(x=>x.rate>0).sort((a,b)=>a.days-b.days);
-  }
-
-  function proHealth(){
-    const total = S.items.length || 1;
-    const alerts = S.items.filter(it=>itemStatus(it).level!=='ok');
-    const zerados = S.items.filter(it=>Number(it.qty||0)===0);
-    const forecast = proForecasts();
-    const risk7 = forecast.filter(x=>x.days<=7);
-    const risk15 = forecast.filter(x=>x.days<=15);
-    const lastConf = S.settings.lastConf || 0;
-    const confDays = lastConf ? Math.floor((Date.now()-lastConf)/86400000) : Infinity;
-    let score = 100;
-    score -= Math.min(45, alerts.length * 8);
-    score -= Math.min(25, zerados.length * 12);
-    score -= Math.min(18, risk7.length * 6);
-    if(confDays !== Infinity && confDays > Number(S.settings.confFreq||30)) score -= 8;
-    if(confDays === Infinity) score -= 6;
-    score = Math.max(0, Math.round(score));
-    return {total,alerts,zerados,forecast,risk7,risk15,confDays,score};
-  }
-
-  function renderProCommand(){
-    if(typeof S==='undefined' || !document.getElementById('dashMonthly')) return;
-    const h = proHealth();
-    const critical = h.forecast[0];
-    const confLabel = h.confDays===Infinity ? 'nunca feita' : proFmtDays(h.confDays);
-    const scoreCls = h.score>=80?'ok':h.score>=60?'warn':'danger';
-    const riskCls = h.risk7.length?'danger':h.risk15.length?'warn':'ok';
-    const html = `
-      <div class="pro-command" id="proCommandCenter">
-        <div class="pro-command-head">
-          <div>
-            <div class="pro-command-title">Central PRO de Estoque</div>
-            <div class="pro-command-sub">Leitura rápida de risco, reposição e conferência</div>
-          </div>
-          <div class="pro-score">${h.score}%</div>
-        </div>
-        <div class="pro-grid">
-          <div class="pro-mini ${scoreCls}"><div class="pro-mini-k">Saúde geral</div><div class="pro-mini-v">${h.score>=80?'Boa':h.score>=60?'Atenção':'Crítica'}</div></div>
-          <div class="pro-mini ${riskCls}"><div class="pro-mini-k">Risco 7 dias</div><div class="pro-mini-v">${h.risk7.length} item(ns)</div></div>
-          <div class="pro-mini ${h.alerts.length?'warn':'ok'}"><div class="pro-mini-k">Alertas ativos</div><div class="pro-mini-v">${h.alerts.length}</div></div>
-          <div class="pro-mini ${h.zerados.length?'danger':'ok'}"><div class="pro-mini-k">Zerados</div><div class="pro-mini-v">${h.zerados.length}</div></div>
-          <div class="pro-mini info"><div class="pro-mini-k">Mais urgente</div><div class="pro-mini-v">${critical?critical.it.name:'Sem tendência'}</div></div>
-          <div class="pro-mini ${h.confDays===Infinity?'warn':'ok'}"><div class="pro-mini-k">Conferência</div><div class="pro-mini-v">${confLabel}</div></div>
-        </div>
-        <div class="pro-action-row">
-          <button class="pro-action" onclick="showScreen('alertas')">Ver alertas</button>
-          <button class="pro-action" onclick="showScreen('lista')">Lista de compras</button>
-          <button class="pro-action" onclick="openConferencia()">Conferência</button>
-          <button class="pro-action" onclick="exportJSON()">Backup</button>
-        </div>
-      </div>`;
-    const target = document.getElementById('dashMonthly');
-    const old = document.getElementById('proCommandCenter');
-    if(old) old.remove();
-    target.insertAdjacentHTML('beforebegin', html);
-
-    const dashInsights = document.getElementById('dashInsights');
-    if(dashInsights && !document.getElementById('proInsightRisco')){
-      const next = h.forecast[0];
-      dashInsights.insertAdjacentHTML('beforeend', `
-        <div class="icard i5" id="proInsightRisco"><div class="ic-label">Risco de Ruptura</div>
-          <div class="ic-val">${h.risk15.length}</div><div class="ic-sub">itens com tendência até 15 dias</div>
-          <div class="ic-trend ${h.risk7.length?'trend-up':'trend-down'}">${next?next.it.name+' · '+proFmtDays(next.days):'sem histórico'}</div>
-        </div>
-        <div class="icard i6" id="proInsightSaude"><div class="ic-label">Saúde PRO</div>
-          <div class="ic-val">${h.score}%</div><div class="ic-sub">índice geral do estoque</div>
-          <div class="ic-trend ${h.score>=80?'trend-down':'trend-up'}">${h.score>=80?'estável':'requer atenção'}</div>
-        </div>`);
-    }
-  }
-
-  function applyVersionLabels(){
-    const about = document.getElementById('aboutVer');
-    if(about) about.textContent = `${PRO_VERSION} · PWA · Offline-First · Mobile/PC`;
-    document.querySelectorAll('.sb-ver').forEach(el=>{ el.textContent = PRO_VERSION; });
-  }
-
-  function enhancePWA(){
-    if(window.matchMedia('(display-mode: standalone)').matches || navigator.standalone){
-      document.body.classList.add('pro-installed');
-    }
-    if('serviceWorker' in navigator && location.protocol !== 'file:'){
-      window.addEventListener('load',()=>{
-        navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{
-          reg.update().catch(()=>{});
-          reg.addEventListener('updatefound',()=>{
-            const nw = reg.installing;
-            if(!nw) return;
-            nw.addEventListener('statechange',()=>{
-              if(nw.state === 'installed' && navigator.serviceWorker.controller){
-                safeToast('🔄 Atualização disponível — recarregue o Stoq para aplicar.', 'info');
-              }
-            });
-          });
-        }).catch(()=>safeToast('PWA: service worker não carregou. Confira se o sw.js está junto do HTML.','err'));
-      },{once:true});
-    }
-  }
-
-  function wrapFunctions(){
-    if(typeof renderDashboard === 'function' && !renderDashboard.__proWrapped){
-      const original = renderDashboard;
-      window.renderDashboard = renderDashboard = function(){
-        original.apply(this,arguments);
-        renderProCommand();
-        applyVersionLabels();
-      };
-      renderDashboard.__proWrapped = true;
-    }
-    if(typeof save === 'function' && !save.__proWrapped){
-      const originalSave = save;
-      window.save = save = function(){
-        try{
-          originalSave.apply(this,arguments);
-          localStorage.setItem('stoq_pro_last_save', String(Date.now()));
-        }catch(err){
-          safeToast('Armazenamento cheio ou bloqueado. Faça backup e limpe fotos antigas.','err');
-          throw err;
-        }
-      };
-      save.__proWrapped = true;
-    }
-    if(typeof showScreen === 'function' && !showScreen.__proWrapped){
-      const originalShow = showScreen;
-      window.showScreen = showScreen = function(name){
-        originalShow.apply(this,arguments);
-        const sc = document.getElementById('mainScroll');
-        if(sc) sc.scrollTo({top:0,behavior:'smooth'});
-        setTimeout(renderProCommand,60);
-      };
-      showScreen.__proWrapped = true;
-    }
-  }
-
-  window.StoqPRO = {version:PRO_VERSION,health:proHealth,forecasts:proForecasts,render:renderProCommand};
-  setAppHeight();
-  window.addEventListener('resize',setAppHeight,{passive:true});
-  window.addEventListener('orientationchange',()=>setTimeout(setAppHeight,250),{passive:true});
-  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) setAppHeight(); });
-  enhancePWA();
-  wrapFunctions();
-  applyVersionLabels();
-  setTimeout(()=>{ try{ if(typeof renderDashboard==='function' && S.screen==='dashboard') renderDashboard(); }catch(e){} },80);
-})();
-</script>
-
 </body>
 </html>

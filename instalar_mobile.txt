@@ -1,0 +1,17 @@
+INSTALAÇÃO MOBILE — STOQ PRO
+
+ANDROID / CHROME
+1. Publique todos os arquivos no GitHub Pages.
+2. Abra: https://ceducunha-alt0609.github.io/stoq/
+3. Toque em ⋮ > Adicionar à tela inicial ou Instalar app.
+4. Se aparecer apenas “atalho”, limpe o cache do site, feche o Chrome e abra de novo pela URL HTTPS.
+
+IPHONE / SAFARI
+1. Abra a URL no Safari.
+2. Toque em Compartilhar.
+3. Toque em Adicionar à Tela de Início.
+
+IMPORTANTE
+- PWA completo exige HTTPS. Pelo arquivo local file:// o navegador não instala como app real.
+- O GitHub Pages já entrega HTTPS.
+- Arquivos essenciais: index.html, manifest.json, sw.js e pasta icons.
