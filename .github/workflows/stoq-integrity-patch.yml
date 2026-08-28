@@ -1,0 +1,38 @@
+name: STOQ integrity patch
+on:
+  push:
+    paths:
+      - 'stoq_integrity_patch.py'
+      - '.github/workflows/stoq-integrity-patch.yml'
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: python stoq_integrity_patch.py
+      - name: Verify
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text()
+          w=Path('sw.js').read_text()
+          for x in [
+            'function buildOperationalSnapshot()',
+            'function applyOperationalSnapshot(d)',
+            "['ec2_items','ec2_movs','ec2_set','ec2_conf','ec2_lists','ec2_clist','ec2_photos']",
+            'S.currentList=S.currentList.filter',
+            'Quantidade, mínimo, alerta e preço não podem ser negativos',
+            '__stoqBackupExtras',
+            'JSON.stringify(buildOperationalSnapshot(),null,2)'
+          ]: assert x in s, x
+          assert 'stoq-pro-v2-4-integrity' in w
+          PY
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html sw.js
+          git diff --cached --quiet || git commit -m 'Harden STOQ operational integrity and sync'
+          git push
