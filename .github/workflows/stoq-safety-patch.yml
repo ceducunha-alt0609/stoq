@@ -1,0 +1,32 @@
+name: STOQ safety patch
+on:
+  push:
+    paths:
+      - 'stoq_patch_safety.py'
+      - '.github/workflows/stoq-safety-patch.yml'
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: python stoq_patch_safety.py
+      - name: Verify
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text()
+          w=Path('sw.js').read_text()
+          assert "localStorage.getItem('ec2_items') === null" in s
+          assert "shoppingLists:S.shoppingLists" in s
+          assert "Array.isArray(d.items)" in s
+          assert "key.startsWith(CACHE_PREFIX)" in w
+          PY
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html sw.js
+          git diff --cached --quiet || git commit -m 'Harden STOQ seed backup and PWA cache'
+          git push
