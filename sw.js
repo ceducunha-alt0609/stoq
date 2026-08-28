@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'stoq-';
-const CACHE_NAME = 'stoq-pro-v2-3-audit-safety';
+const CACHE_NAME = 'stoq-pro-v2-4-integrity';
 const APP_SHELL = [
   './',
   './index.html',

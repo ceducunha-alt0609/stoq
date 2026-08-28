@@ -2695,6 +2695,34 @@ function saveSettings() {
   save();
 }
 
+function buildOperationalSnapshot() {
+  return {
+    app:'Stoq', version:4,
+    items:S.items, movs:S.movs, settings:S.settings,
+    confChecked:S.confChecked,
+    shoppingLists:S.shoppingLists,
+    currentList:S.currentList,
+    photos:S.photos||{},
+    exportedAt:new Date().toISOString()
+  };
+}
+function validateOperationalSnapshot(d) {
+  return !!(d && typeof d==='object' && !Array.isArray(d) &&
+    Array.isArray(d.items) && Array.isArray(d.movs) &&
+    d.settings && typeof d.settings==='object' && !Array.isArray(d.settings));
+}
+function applyOperationalSnapshot(d) {
+  if(!validateOperationalSnapshot(d)) throw new Error('Estrutura de backup inválida');
+  S.items=d.items;
+  S.movs=d.movs;
+  S.settings={...S.settings,...d.settings};
+  if(Array.isArray(d.shoppingLists)) S.shoppingLists=d.shoppingLists;
+  if(Array.isArray(d.currentList)) S.currentList=d.currentList;
+  if(d.photos && typeof d.photos==='object' && !Array.isArray(d.photos)) S.photos=d.photos;
+  if(d.confChecked && typeof d.confChecked==='object' && !Array.isArray(d.confChecked)) S.confChecked=d.confChecked;
+  save();
+}
+
 // ══════════════════════════════════════════
 // SEED DATA
 // ══════════════════════════════════════════
@@ -3401,6 +3429,9 @@ function saveItem(){
   const min=parseInt(document.getElementById('fMin').value)||0;
   const thresh=document.getElementById('fThresh').value;
   const preco=parseFloat(document.getElementById('fPreco').value)||0;
+  if(qty<0 || min<0 || preco<0 || (thresh!=='' && (isNaN(parseInt(thresh)) || parseInt(thresh)<0))){
+    toast('Quantidade, mínimo, alerta e preço não podem ser negativos','err'); return;
+  }
   const obj={
     name,icon:S.selEmoji,
     cat:document.getElementById('fCat').value,
@@ -3437,8 +3468,12 @@ function saveItem(){
 }
 function deleteItem(){
   if(!confirm('Excluir este produto e todo o histórico?'))return;
-  S.items=S.items.filter(i=>i.id!==S.editId);
-  S.movs=S.movs.filter(m=>m.itemId!==S.editId);
+  const deletedId=S.editId;
+  S.items=S.items.filter(i=>i.id!==deletedId);
+  S.movs=S.movs.filter(m=>m.itemId!==deletedId);
+  S.currentList=S.currentList.filter(i=>i.itemId!==deletedId);
+  delete S.confChecked[deletedId];
+  delete S.photos[deletedId];
   save();closeModal('modalAdd');
   toast('Produto excluído','ok');
   if(S.screen==='estoque')renderEstoque();
@@ -3942,7 +3977,7 @@ async function syncGithubSave(){
   const gistId=document.getElementById('ghGistId').value.trim();
   if(!token){toast('Token necessário','err');return;}
   ghLog('Enviando dados…');
-  const payload={description:'Stoq Backup',public:false,files:{'stoq-data.json':{content:JSON.stringify({items:S.items,movs:S.movs,settings:S.settings},null,2)}}};
+  const payload={description:'Stoq Backup',public:false,files:{'stoq-data.json':{content:JSON.stringify(buildOperationalSnapshot(),null,2)}}};
   try{
     const url=gistId?`https://api.github.com/gists/${gistId}`:'https://api.github.com/gists';
     const method=gistId?'PATCH':'POST';
@@ -3969,10 +4004,8 @@ async function syncGithubLoad(){
     const file=data.files&&data.files['stoq-data.json'];
     if(!file){ghLog('Arquivo não encontrado no Gist');return;}
     const parsed=JSON.parse(file.content);
-    if(parsed.items) S.items=parsed.items;
-    if(parsed.movs)  S.movs=parsed.movs;
-    if(parsed.settings) S.settings=parsed.settings;
-    save(); renderDashboard(); updateBanners();
+    applyOperationalSnapshot(parsed);
+    renderDashboard(); updateBanners();
     ghSetStatus('ok');
     ghLog('✓ Dados carregados — '+S.items.length+' itens');
     toast('✓ Estoque restaurado do GitHub','ok');
@@ -3990,7 +4023,7 @@ async function syncJBSave(){
   const binId=document.getElementById('jbBinId').value.trim();
   if(!key){toast('API Key necessária','err');return;}
   jbLog('Salvando no JSONBin…');
-  const payload={items:S.items,movs:S.movs,settings:S.settings,savedAt:Date.now()};
+  const payload={...buildOperationalSnapshot(),savedAt:Date.now()};
   try{
     const url=binId?`https://api.jsonbin.io/v3/b/${binId}`:'https://api.jsonbin.io/v3/b';
     const method=binId?'PUT':'POST';
@@ -4018,8 +4051,8 @@ async function syncJBLoad(){
     const res=await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`,{headers:{'X-Master-Key':key}});
     const data=await res.json();
     const rec=data.record;
-    if(rec?.items){ S.items=rec.items; S.movs=rec.movs||S.movs; S.settings=rec.settings||S.settings; }
-    save(); renderDashboard(); updateBanners();
+    applyOperationalSnapshot(rec);
+    renderDashboard(); updateBanners();
     jbSetStatus('ok');
     jbLog('✓ Carregado — '+S.items.length+' itens');
     toast('✓ Dados restaurados do JSONBin','ok');
@@ -4037,7 +4070,8 @@ async function syncSBSave(){
   const key=document.getElementById('sbKey').value.trim();
   if(!url||!key){toast('URL e Key necessários','err');return;}
   sbLog('Enviando para Supabase…');
-  const payload={id:'stoq-main',items:JSON.stringify(S.items),movs:JSON.stringify(S.movs),settings:JSON.stringify(S.settings),updated_at:new Date().toISOString()};
+  const cloudSettings={...S.settings,__stoqBackupExtras:{confChecked:S.confChecked,shoppingLists:S.shoppingLists,currentList:S.currentList,photos:S.photos||{}}};
+  const payload={id:'stoq-main',items:JSON.stringify(S.items),movs:JSON.stringify(S.movs),settings:JSON.stringify(cloudSettings),updated_at:new Date().toISOString()};
   try{
     const res=await fetch(url+'/rest/v1/stoq_backups',{
       method:'POST',
@@ -4067,10 +4101,14 @@ async function syncSBLoad(){
     const rows=await res.json();
     if(rows&&rows[0]){
       const r=rows[0];
-      if(r.items) S.items=JSON.parse(r.items);
-      if(r.movs) S.movs=JSON.parse(r.movs);
-      if(r.settings) S.settings=JSON.parse(r.settings);
-      save(); renderDashboard(); updateBanners();
+      const items=JSON.parse(r.items||'null');
+      const movs=JSON.parse(r.movs||'null');
+      const rawSettings=JSON.parse(r.settings||'null');
+      const extras=rawSettings && rawSettings.__stoqBackupExtras ? rawSettings.__stoqBackupExtras : {};
+      const settings=rawSettings && typeof rawSettings==='object' ? {...rawSettings} : rawSettings;
+      if(settings && typeof settings==='object') delete settings.__stoqBackupExtras;
+      applyOperationalSnapshot({items,movs,settings,...extras});
+      renderDashboard(); updateBanners();
       sbSetStatus('ok');
       sbLog('✓ Carregado — '+S.items.length+' itens');
       toast('✓ Restaurado do Supabase','ok');
@@ -4082,7 +4120,7 @@ function clearSBConfig(){ document.getElementById('sbUrl').value=''; document.ge
 
 // ── Local backup ───────────────────────────
 function exportJSON(){
-  const blob=new Blob([JSON.stringify({app:'Stoq',version:3,items:S.items,movs:S.movs,settings:S.settings,confChecked:S.confChecked,shoppingLists:S.shoppingLists,currentList:S.currentList,photos:S.photos||{},exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify(buildOperationalSnapshot(),null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download='stoq-backup-'+new Date().toISOString().slice(0,10)+'.json';
@@ -4095,15 +4133,8 @@ function importJSON(e){
   reader.onload=ev=>{
     try{
       const d=JSON.parse(ev.target.result);
-      if(!d || typeof d!=='object' || !Array.isArray(d.items) || !Array.isArray(d.movs) || !d.settings || typeof d.settings!=='object' || Array.isArray(d.settings)) throw new Error('backup');
-      S.items=d.items;
-      S.movs=d.movs;
-      S.settings={...S.settings,...d.settings};
-      if(Array.isArray(d.shoppingLists)) S.shoppingLists=d.shoppingLists;
-      if(Array.isArray(d.currentList)) S.currentList=d.currentList;
-      if(d.photos && typeof d.photos==='object' && !Array.isArray(d.photos)) S.photos=d.photos;
-      if(d.confChecked && typeof d.confChecked==='object' && !Array.isArray(d.confChecked)) S.confChecked=d.confChecked;
-      save(); renderDashboard(); updateBanners();
+      applyOperationalSnapshot(d);
+      renderDashboard(); updateBanners();
       toast('✓ Dados importados: '+S.items.length+' itens','ok');
       closeSettings();
     } catch{ toast('Arquivo JSON inválido ou incompleto','err'); }
@@ -4112,13 +4143,13 @@ function importJSON(e){
   reader.readAsText(file);
 }
 function copyAppData(){
-  navigator.clipboard.writeText(JSON.stringify({items:S.items,movs:S.movs,settings:S.settings},null,2))
+  navigator.clipboard.writeText(JSON.stringify(buildOperationalSnapshot(),null,2))
     .then(()=>toast('JSON copiado!','ok'))
     .catch(()=>toast('Erro ao copiar','err'));
 }
 function confirmReset(){
   if(confirm('⚠️ Tem certeza? Todos os dados serão apagados permanentemente.')){
-    localStorage.removeItem('estoqueCP');
+    ['ec2_items','ec2_movs','ec2_set','ec2_conf','ec2_lists','ec2_clist','ec2_photos'].forEach(k=>localStorage.removeItem(k));
     location.reload();
   }
 }
