@@ -1,0 +1,160 @@
+
+=== function syncGithubSave ===
+
+function syncGithubSave(){
+  const token=document.getElementById('ghToken').value.trim();
+  const gistId=document.getElementById('ghGistId').value.trim();
+  if(!token){toast('Token necessário','err');return;}
+  ghLog('Enviando dados…');
+  const payload={description:'Stoq Backup',public:false,files:{'stoq-data.json':{content:JSON.stringify({items:S.items,movs:S.movs,settings:S.settings},null,2)}}};
+  try{
+    const url=gistId?`https://api.github.com/gists/${gistId}`:'https://api.github.com/gists';
+    const method=gistId?'PATCH':'POST';
+    const res=await fetch(url,{method,headers:{'Authorization':'token '+token,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(data.id){
+      document.getElementById('ghGistId').value=data.id;
+      SP.set('ghToken',token); SP.set('ghGistId',data.id);
+      ghSetStatus('ok');
+      ghLog('✓ Salvo! Gist: '+data.id.slice(0,12)+'…');
+      toast('✓ Backup no GitHub salvo','ok');
+    } else { ghLog('Erro: '+(data.message||'resposta inválida')); }
+  } catch(e){ ghLog('Erro de rede: '+e.message); toast('Falha na conexão','err'); }
+}
+
+
+=== async function syncGithubLoad ===
+
+async function syncGithubLoad(){
+  const token=document.getElementById('ghToken').value.trim();
+  const gistId=document.getElementById('ghGistId').value.trim();
+  if(!token||!gistId){toast('Token e Gist ID necessários','err');return;}
+  ghLog('Carregando dados do Gist…');
+  try{
+    const res=await fetch(`https://api.github.com/gists/${gistId}`,{headers:{'Authorization':'token '+token}});
+    const data=await res.json();
+    const file=data.files&&data.files['stoq-data.json'];
+    if(!file){ghLog('Arquivo não encontrado no Gist');return;}
+    const parsed=JSON.parse(file.content);
+    if(parsed.items) S.items=parsed.items;
+    if(parsed.movs)  S.movs=parsed.movs;
+    if(parsed.settings) S.settings=parsed.settings;
+    save(); renderDashboard(); updateBanners();
+    ghSetStatus('ok');
+    ghLog('✓ Dados carregados — '+S.items.length+' itens');
+    toast('✓ Estoque restaurado do GitHub','ok');
+    closeSettings();
+  } catch(e){ ghLog('Erro: '+e.message); toast('Falha ao carregar','err'); }
+}
+
+=== function syncSupabaseSave ===
+
+NOT FOUND
+
+=== async function syncSupabaseLoad ===
+
+NOT FOUND
+
+=== function confirmReset ===
+
+function confirmReset(){
+  if(confirm('⚠️ Tem certeza? Todos os dados serão apagados permanentemente.')){
+    localStorage.removeItem('estoqueCP');
+    location.reload();
+  }
+}
+
+// ══════════════════════════════════════════
+// INSIGHTS ENGINE
+// ══════════════════════════════════════════
+
+=== function deleteItem ===
+
+function deleteItem(){
+  if(!confirm('Excluir este produto e todo o histórico?'))return;
+  S.items=S.items.filter(i=>i.id!==S.editId);
+  S.movs=S.movs.filter(m=>m.itemId!==S.editId);
+  save();closeModal('modalAdd');
+  toast('Produto excluído','ok');
+  if(S.screen==='estoque')renderEstoque();
+  updateBanners();renderDashboard();
+}
+
+// ══════════════════════════════════════════
+// DETAIL MODAL
+// ══════════════════════════════════════════
+
+=== function saveMov ===
+
+function saveMov(){
+  const itemId=document.getElementById('movProduct').value;
+  const qty=parseInt(document.getElementById('movQty').value)||0;
+  const type=document.getElementById('movType').value;
+  const resp=document.getElementById('movResp').value.trim();
+  const obs=document.getElementById('movObs').value.trim();
+  const valor=parseFloat(document.getElementById('movValor').value)||0;
+  if(!qty||qty<1){toast('Quantidade inválida','err');return}
+  const idx=S.items.findIndex(i=>i.id===itemId);
+  if(idx===-1)return;
+  if(type==='out'&&S.items[idx].qty<qty){
+    toast(`Estoque insuficiente — disponível: ${S.items[idx].qty} ${S.items[idx].unit}`,'err');
+    return;
+  }
+  S.items[idx].qty+=type==='in'?qty:-qty;
+  S.movs.push({id:uid(),itemId,type,qty,resp,obs,valor,ts:Date.now()});
+  save();closeModal('modalMov');
+  toast(type==='in'?`+${qty} unidades adicionadas`:`-${qty} unidades retiradas`,'ok');
+  if(S.screen==='estoque')renderEstoque();
+  if(S.screen==='mov')renderMovs();
+  updateBanners();
+  if(S.screen==='dashboard')renderDashboard();
+}
+
+// ══════════════════════════════════════════
+// CONFERÊNCIA
+// ══════════════════════════════════════════
+
+=== function swipeQuickMov ===
+
+function swipeQuickMov(type, id){
+  _closeRow(id, true);
+
+  const it = getItem(id); if(!it) return;
+
+  if(type === 'out' && it.qty < 1){
+    toast('Estoque zerado — sem itens para retirar','err'); return;
+  }
+
+  // Inline +1/-1 with qty bump overlay — no modal needed for quick ops
+  const delta = type === 'in' ? 1 : -1;
+  const idx   = S.items.findIndex(i=>i.id===id); if(idx===-1) return;
+  S.items[idx].qty = Math.max(0, S.items[idx].qty + delta);
+  S.movs.push({
+    id:uid(), itemId:id, type,
+    qty:1,
+    resp:localStorage.getItem('stoq_resp')||'',
+    obs:'Acesso rápido',
+    valor:0, ts:Date.now()
+  });
+  save(); updateBanners();
+
+  // Show floating bump badge
+  _showQtyBump(type, it.name, S.items[idx].qty, it.unit);
+
+  // Re-render only the affected card in-place
+  filterItems();
+}
+
+
+=== function handlePhotoUpload ===
+
+function handlePhotoUpload(e){
+  const file = e.target.files[0]; if(!file) return;
+  if(file.size > 3*1024*1024){ toast('Foto muito grande (máx 3MB)','err'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    S._pendingPhoto = ev.target.result;
+    _resetPhotoUI(ev.target.result);
+  };
+  reader.readAsDataURL(file);
+}
