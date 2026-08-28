@@ -2826,7 +2826,8 @@ function monthStats(){
     const spend  =entries.reduce((s,mv)=>{
       if(mv.valor&&mv.valor>0) return s+mv.valor;
       const it=getItem(mv.itemId);
-      return s+(it&&it.preco?(it.preco*mv.qty):0);
+      const unitPrice = Number.isFinite(mv.precoSnapshot) ? mv.precoSnapshot : (it&&it.preco?it.preco:0);
+      return s+(unitPrice*mv.qty);
     },0);
     return {
       key:m.key,label:m.label,
@@ -3163,41 +3164,7 @@ function renderCats(){
 // ══════════════════════════════════════════
 // ALERTAS & CONFIG
 // ══════════════════════════════════════════
-function renderAlertas(){
-  document.getElementById('threshWarn').value=S.settings.threshWarn;
-  document.getElementById('threshWarnLbl').textContent=S.settings.threshWarn+'%';
-  document.getElementById('confFreq').value=S.settings.confFreq;
-
-  const tl=document.getElementById('threshList');
-  tl.innerHTML=S.items.map(it=>`
-    <div class="alert-thresh-row">
-      <div class="atr-info">
-        <div class="atr-name">${it.icon} ${it.name}</div>
-        <div class="atr-cur">atual: ${it.qty} ${it.unit} · mín: ${it.min} · efetivo: ${alertThresh(it)}</div>
-      </div>
-      <input type="number" class="atr-input" value="${it.thresh||''}" placeholder="auto" min="0"
-        onchange="setItemThresh('${it.id}',this.value)">
-    </div>
-  `).join('');
-
-  const crit=S.items.filter(it=>itemStatus(it).level!=='ok').sort((a,b)=>a.qty-b.qty);
-  const aa=document.getElementById('activeAlerts');
-  if(!crit.length){
-    aa.innerHTML=`<div style="background:var(--surface);border:1px solid rgba(46,213,115,.2);border-radius:var(--r);padding:16px;text-align:center;color:var(--green);font-size:13px">✓ Nenhum alerta ativo — estoque saudável!</div>`;
-  } else {
-    aa.innerHTML=`<div class="alist">${crit.map(it=>{
-      const st=itemStatus(it);
-      return `<div class="aitem" onclick="openDetail('${it.id}')">
-        <div class="adot ${st.level}"></div>
-        <div class="ainfo">
-          <div class="aname">${it.icon} ${it.name}</div>
-          <div class="ameta">${st.label} · ${it.qty}/${alertThresh(it)} ${it.unit} · ${CAT[it.cat].label}</div>
-        </div>
-        <div class="aqty ${st.level}">${it.qty}</div>
-      </div>`;
-    }).join('')}</div>`;
-  }
-}
+// renderAlertas is defined once below, together with the budget controls.
 
 function updateThreshLabel(type){
   if(type==='warn'){
@@ -3545,7 +3512,7 @@ function saveMov(){
     return;
   }
   S.items[idx].qty+=type==='in'?qty:-qty;
-  S.movs.push({id:uid(),itemId,type,qty,resp,obs,valor,ts:Date.now()});
+  S.movs.push({id:uid(),itemId,type,qty,resp,obs,valor,precoSnapshot:S.items[idx].preco||0,ts:Date.now()});
   save();closeModal('modalMov');
   toast(type==='in'?`+${qty} unidades adicionadas`:`-${qty} unidades retiradas`,'ok');
   if(S.screen==='estoque')renderEstoque();
@@ -5265,7 +5232,8 @@ function updateDashboardBudgetAlert(){
   const catSpend = {};
   S.movs.filter(m=>m.type==='in'&&getMonthKey(m.ts)===mesKey).forEach(m=>{
     const it=getItem(m.itemId); if(!it) return;
-    const v=m.valor>0?m.valor:(it.preco||0)*m.qty;
+    const unitPrice = Number.isFinite(m.precoSnapshot) ? m.precoSnapshot : (it.preco||0);
+    const v=m.valor>0?m.valor:unitPrice*m.qty;
     catSpend[it.cat]=(catSpend[it.cat]||0)+v;
   });
   const overBudget = Object.entries(budgets).filter(([k,v])=>v>0&&(catSpend[k]||0)>v);
@@ -5283,7 +5251,11 @@ function updateDashboardBudgetAlert(){
 function renderAlertas(){
   // threshold
   const tw = document.getElementById('threshWarn');
-  if(tw){ tw.value = S.settings.threshWarn||150; updateThreshLabel('warn'); }
+  if(tw){
+    tw.value = S.settings.threshWarn ?? 150;
+    const twLbl = document.getElementById('threshWarnLbl');
+    if(twLbl) twLbl.textContent = tw.value+'%';
+  }
   const cf = document.getElementById('confFreq');
   if(cf){ cf.value = S.settings.confFreq||30; }
 
@@ -5297,7 +5269,7 @@ function renderAlertas(){
       </div>
       <input type="number" class="atr-input" id="thresh_${it.id}"
         value="${it.thresh!=null?it.thresh:''}" placeholder="global" min="0"
-        onchange="setThresh('${it.id}',this.value)">
+        onchange="setItemThresh('${it.id}',this.value)">
     </div>`).join('');
 
   // active alerts
