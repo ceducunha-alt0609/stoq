@@ -1,0 +1,20 @@
+name: STOQ final audit
+on:
+  push:
+    paths:
+      - 'stoq_final_audit.py'
+      - '.github/workflows/stoq-final-audit.yml'
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: python stoq_final_audit.py
+      - run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add stoq_final_audit_report.txt
+          git diff --cached --quiet || git commit -m 'Generate STOQ final audit report'
+          git push
