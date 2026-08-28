@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'stoq-';
-const CACHE_NAME = 'stoq-pro-v2-4-integrity';
+const CACHE_NAME = 'stoq-pro-v2-5-reset-cleanup';
 const APP_SHELL = [
   './',
   './index.html',

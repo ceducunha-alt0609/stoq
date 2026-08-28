@@ -4059,7 +4059,7 @@ async function syncJBLoad(){
     closeSettings();
   } catch(e){ jbLog('Erro: '+e.message); toast('Falha ao carregar','err'); }
 }
-function clearJBConfig(){ document.getElementById('jbKey').value=''; document.getElementById('jbBinId').value=''; jbSetStatus('off'); jbLog('Configuração removida'); }
+function clearJBConfig(){ document.getElementById('jbKey').value=''; document.getElementById('jbBinId').value=''; jbSetStatus('off'); jbLog('Configuração removida'); SP.set('jbKey',''); SP.set('jbBinId',''); }
 
 // ── Supabase ───────────────────────────────
 function sbLog(msg){ const el=document.getElementById('sbLog'); if(el) el.textContent=new Date().toLocaleTimeString('pt-BR')+' '+msg; }
@@ -4116,7 +4116,7 @@ async function syncSBLoad(){
     } else { sbLog('Nenhum registro encontrado'); }
   } catch(e){ sbLog('Erro: '+e.message); toast('Falha ao carregar','err'); }
 }
-function clearSBConfig(){ document.getElementById('sbUrl').value=''; document.getElementById('sbKey').value=''; sbSetStatus('off'); sbLog('Configuração removida'); }
+function clearSBConfig(){ document.getElementById('sbUrl').value=''; document.getElementById('sbKey').value=''; sbSetStatus('off'); sbLog('Configuração removida'); SP.set('sbUrl',''); SP.set('sbKey',''); }
 
 // ── Local backup ───────────────────────────
 function exportJSON(){
@@ -4149,7 +4149,10 @@ function copyAppData(){
 }
 function confirmReset(){
   if(confirm('⚠️ Tem certeza? Todos os dados serão apagados permanentemente.')){
-    ['ec2_items','ec2_movs','ec2_set','ec2_conf','ec2_lists','ec2_clist','ec2_photos'].forEach(k=>localStorage.removeItem(k));
+    // Keep an explicit empty inventory marker so demo seed does not resurrect after an intentional reset.
+    localStorage.setItem('ec2_items','[]');
+    localStorage.setItem('ec2_movs','[]');
+    ['ec2_set','ec2_conf','ec2_lists','ec2_clist','ec2_photos'].forEach(k=>localStorage.removeItem(k));
     location.reload();
   }
 }
