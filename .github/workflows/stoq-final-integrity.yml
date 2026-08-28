@@ -1,0 +1,31 @@
+name: STOQ final integrity patch
+on:
+  push:
+    paths:
+      - 'stoq_patch_final_integrity.py'
+      - '.github/workflows/stoq-final-integrity.yml'
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: python stoq_patch_final_integrity.py
+      - run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          sw=Path('sw.js').read_text(encoding='utf-8')
+          assert s.count('function renderAlertas(){') == 1
+          assert "setThresh('${it.id}'" not in s
+          assert 'precoSnapshot:S.items[idx].preco||0' in s
+          assert 'stoq-pro-v2-6-final-integrity' in sw
+          print('STOQ final integrity assertions OK')
+          PY
+      - run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html sw.js
+          git diff --cached --quiet || git commit -m 'Harden STOQ alerts and historical costs'
+          git push
