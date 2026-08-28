@@ -2679,7 +2679,7 @@ function load() {
   try { S.shoppingLists = JSON.parse(localStorage.getItem('ec2_lists') || '[]'); } catch(e){}
   try { S.currentList = JSON.parse(localStorage.getItem('ec2_clist') || '[]'); } catch(e){}
   try { S.photos = JSON.parse(localStorage.getItem('ec2_photos') || '{}'); } catch(e){ S.photos={}; }
-  if (!S.items.length) seedData();
+  if (localStorage.getItem('ec2_items') === null) seedData();
 }
 function save() {
   localStorage.setItem('ec2_items', JSON.stringify(S.items));
@@ -4082,7 +4082,7 @@ function clearSBConfig(){ document.getElementById('sbUrl').value=''; document.ge
 
 // ── Local backup ───────────────────────────
 function exportJSON(){
-  const blob=new Blob([JSON.stringify({items:S.items,movs:S.movs,settings:S.settings,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({app:'Stoq',version:3,items:S.items,movs:S.movs,settings:S.settings,confChecked:S.confChecked,shoppingLists:S.shoppingLists,currentList:S.currentList,photos:S.photos||{},exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download='stoq-backup-'+new Date().toISOString().slice(0,10)+'.json';
@@ -4095,13 +4095,19 @@ function importJSON(e){
   reader.onload=ev=>{
     try{
       const d=JSON.parse(ev.target.result);
-      if(d.items) S.items=d.items;
-      if(d.movs) S.movs=d.movs;
-      if(d.settings) S.settings=d.settings;
+      if(!d || typeof d!=='object' || !Array.isArray(d.items) || !Array.isArray(d.movs) || !d.settings || typeof d.settings!=='object' || Array.isArray(d.settings)) throw new Error('backup');
+      S.items=d.items;
+      S.movs=d.movs;
+      S.settings={...S.settings,...d.settings};
+      if(Array.isArray(d.shoppingLists)) S.shoppingLists=d.shoppingLists;
+      if(Array.isArray(d.currentList)) S.currentList=d.currentList;
+      if(d.photos && typeof d.photos==='object' && !Array.isArray(d.photos)) S.photos=d.photos;
+      if(d.confChecked && typeof d.confChecked==='object' && !Array.isArray(d.confChecked)) S.confChecked=d.confChecked;
       save(); renderDashboard(); updateBanners();
       toast('✓ Dados importados: '+S.items.length+' itens','ok');
       closeSettings();
-    } catch{ toast('Arquivo JSON inválido','err'); }
+    } catch{ toast('Arquivo JSON inválido ou incompleto','err'); }
+    finally { e.target.value=''; }
   };
   reader.readAsText(file);
 }

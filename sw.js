@@ -1,4 +1,5 @@
-const CACHE_NAME = 'stoq-pro-v2-2-cache';
+const CACHE_PREFIX = 'stoq-';
+const CACHE_NAME = 'stoq-pro-v2-3-audit-safety';
 const APP_SHELL = [
   './',
   './index.html',
@@ -18,7 +19,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
-      keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+      keys.filter(key => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME).map(key => caches.delete(key))
     )).then(() => self.clients.claim())
   );
 });
